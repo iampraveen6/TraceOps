@@ -1,0 +1,74 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: prometheus
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: {{ .Values.prometheus.scrapeInterval }}
+    scrape_configs:
+      - job_name: 'otel-collector'
+        static_configs:
+          - targets: ['otel-collector.{{ .Values.namespace }}.svc.cluster.local:{{ .Values.otelCollector.service.metrics }}']
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: {{ .Values.prometheus.image }}
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--storage.tsdb.retention.time={{ .Values.prometheus.retentionTime }}"
+            - "--storage.tsdb.retention.size={{ .Values.prometheus.retentionSize }}"
+            - "--query.max-samples=250000"
+          ports:
+            - containerPort: 9090
+          resources:
+            requests:
+              cpu: {{ .Values.prometheus.resources.requests.cpu }}
+              memory: {{ .Values.prometheus.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.prometheus.resources.limits.cpu }}
+              memory: {{ .Values.prometheus.resources.limits.memory }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: storage
+              mountPath: /prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+        - name: storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - name: http
+      port: {{ .Values.prometheus.service.port }}
+      targetPort: 9090
+  type: ClusterIP

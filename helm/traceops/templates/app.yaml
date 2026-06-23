@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traceops-app
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: traceops-app
+  template:
+    metadata:
+      labels:
+        app: traceops-app
+    spec:
+      containers:
+        - name: app
+          image: "{{ .Values.app.image.repository }}:{{ .Values.app.image.tag }}"
+          imagePullPolicy: {{ .Values.imagePullPolicy }}
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: {{ .Values.app.env.OTEL_EXPORTER_OTLP_ENDPOINT | quote }}
+            - name: OTEL_SERVICE_NAME
+              value: {{ .Values.app.env.OTEL_SERVICE_NAME | quote }}
+            - name: OTEL_TRACES_SAMPLER
+              value: {{ .Values.app.env.OTEL_TRACES_SAMPLER | quote }}
+            - name: OTEL_TRACES_SAMPLER_ARG
+              value: {{ .Values.app.env.OTEL_TRACES_SAMPLER_ARG | quote }}
+            - name: PORT
+              value: {{ .Values.app.env.PORT | quote }}
+          ports:
+            - containerPort: 3000
+              name: http
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: {{ .Values.app.resources.requests.cpu }}
+              memory: {{ .Values.app.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.app.resources.limits.cpu }}
+              memory: {{ .Values.app.resources.limits.memory }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: traceops-app
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: traceops-app
+  ports:
+    - name: http
+      port: {{ .Values.app.service.port }}
+      targetPort: {{ .Values.app.service.targetPort }}
+  type: ClusterIP

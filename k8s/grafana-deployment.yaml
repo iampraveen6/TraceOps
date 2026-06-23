@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: traceops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: admin
+            - name: GF_ANALYTICS_REPORTING_ENABLED
+              value: "false"
+            - name: GF_ANALYTICS_CHECK_FOR_UPDATES
+              value: "false"
+          volumeMounts:
+            - name: datasources
+              mountPath: /etc/grafana/provisioning/datasources
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+      volumes:
+        - name: datasources
+          configMap:
+            name: grafana-datasource
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: traceops
+spec:
+  selector:
+    app: grafana
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+  type: ClusterIP

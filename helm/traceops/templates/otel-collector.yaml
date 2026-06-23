@@ -1,0 +1,96 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-collector-config
+  namespace: {{ .Values.namespace }}
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+          http:
+    processors:
+      batch:
+    exporters:
+      logging:
+        loglevel: warn
+      jaeger:
+        protocols:
+          thrift_http:
+            endpoint: http://jaeger.{{ .Values.namespace }}.svc.cluster.local:14268/api/traces
+      prometheus:
+        endpoint: ":8889"
+        const_labels:
+          job: "otel-collector"
+
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [jaeger, logging]
+        metrics:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [prometheus]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otel-collector
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otel-collector
+  template:
+    metadata:
+      labels:
+        app: otel-collector
+    spec:
+      containers:
+        - name: otel-collector
+          image: {{ .Values.otelCollector.image }}
+          args: ["--config=/etc/otelcol/config.yaml"]
+          ports:
+            - containerPort: 4317
+              name: otlp-grpc
+            - containerPort: 4318
+              name: otlp-http
+            - containerPort: 8889
+              name: metrics
+          resources:
+            requests:
+              cpu: {{ .Values.otelCollector.resources.requests.cpu }}
+              memory: {{ .Values.otelCollector.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.otelCollector.resources.limits.cpu }}
+              memory: {{ .Values.otelCollector.resources.limits.memory }}
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otelcol
+      volumes:
+        - name: config
+          configMap:
+            name: otel-collector-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otel-collector
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: otel-collector
+  ports:
+    - name: otlp-grpc
+      port: {{ .Values.otelCollector.service.otlpGrpc }}
+      targetPort: 4317
+    - name: otlp-http
+      port: {{ .Values.otelCollector.service.otlpHttp }}
+      targetPort: 4318
+    - name: metrics
+      port: {{ .Values.otelCollector.service.metrics }}
+      targetPort: 8889

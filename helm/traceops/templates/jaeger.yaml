@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jaeger
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jaeger
+  template:
+    metadata:
+      labels:
+        app: jaeger
+    spec:
+      containers:
+        - name: jaeger
+          image: {{ .Values.jaeger.image }}
+          args: {{ toYaml .Values.jaeger.args | nindent 12 }}
+          ports:
+            - name: ui
+              containerPort: 16686
+            - name: collector-http
+              containerPort: 14268
+          resources:
+            requests:
+              cpu: {{ .Values.jaeger.resources.requests.cpu }}
+              memory: {{ .Values.jaeger.resources.requests.memory }}
+            limits:
+              cpu: {{ .Values.jaeger.resources.limits.cpu }}
+              memory: {{ .Values.jaeger.resources.limits.memory }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jaeger
+  namespace: {{ .Values.namespace }}
+spec:
+  selector:
+    app: jaeger
+  ports:
+    - name: ui
+      port: {{ .Values.jaeger.service.ui }}
+      targetPort: 16686
+    - name: collector-http
+      port: {{ .Values.jaeger.service.collectorHttp }}
+      targetPort: 14268
+  type: ClusterIP

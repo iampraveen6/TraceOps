@@ -1,0 +1,30 @@
+# IDE / tool noise
+.codebuddy/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Dependencies
+node_modules/
+
+# Build / logs
+npm-debug.log*
+*.log
+
+# Environment
+.env
+.env.*
+*.local
+
+# Large binaries (should not be in repo)
+kubectl
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Misc
+*.tgz
+dist/
+build/

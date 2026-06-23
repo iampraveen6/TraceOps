@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  namespace: traceops
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:latest
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            - "--storage.tsdb.path=/prometheus"
+            - "--storage.tsdb.retention.time=24h"
+            - "--storage.tsdb.retention.size=256MB"
+            - "--query.max-samples=250000"
+          ports:
+            - containerPort: 9090
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "300m"
+              memory: "512Mi"
+          volumeMounts:
+            - name: config
+              mountPath: /etc/prometheus
+            - name: storage
+              mountPath: /prometheus
+      volumes:
+        - name: config
+          configMap:
+            name: prometheus-config
+        - name: storage
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+  namespace: traceops
+spec:
+  selector:
+    app: prometheus
+  ports:
+    - name: http
+      port: 9090
+      targetPort: 9090
+  type: ClusterIP

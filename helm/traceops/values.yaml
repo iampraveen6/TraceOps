@@ -1,0 +1,82 @@
+namespace: traceops
+
+# Global image pull policy for local Docker Desktop Kubernetes
+imagePullPolicy: Never
+
+app:
+  image:
+    repository: traceops-app
+    tag: latest
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  env:
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector.traceops.svc.cluster.local:4317
+    OTEL_SERVICE_NAME: traceops-app
+    OTEL_TRACES_SAMPLER: parentbased_traceidratio
+    OTEL_TRACES_SAMPLER_ARG: "0.1"
+    PORT: "3000"
+  service:
+    port: 8080
+    targetPort: 3000
+
+otelCollector:
+  image: otel/opentelemetry-collector-contrib:latest
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+  service:
+    otlpGrpc: 4317
+    otlpHttp: 4318
+    metrics: 8889
+
+jaeger:
+  image: jaegertracing/all-in-one:latest
+  args:
+    - "--memory.max-traces=2000"
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 256Mi
+  service:
+    ui: 16686
+    collectorHttp: 14268
+
+prometheus:
+  image: prom/prometheus:latest
+  retentionTime: 24h
+  retentionSize: 256MB
+  scrapeInterval: 30s
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+  service:
+    port: 9090
+
+grafana:
+  image: grafana/grafana:latest
+  adminPassword: admin
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+  service:
+    port: 3000
