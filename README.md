@@ -8,6 +8,8 @@ TraceOps is a lightweight, end-to-end observability stack for a Node.js microser
 | **Tech stack** | Node.js, Express, OpenTelemetry, Prometheus, Grafana, Jaeger, Helm, Docker Desktop, GitHub Actions. |
 | **Key outcomes** | End-to-end observability, GitOps-ready manifests, automated CI image builds, and low-resource tuning. |
 
+[![Docker Build](https://github.com/iampraveen6/TraceOps/actions/workflows/docker.yml/badge.svg)](https://github.com/iampraveen6/TraceOps/actions/workflows/docker.yml)
+
 ## Overview
 
 - Microservice: Node.js (Express) with OpenTelemetry auto-instrumentation and custom spans/logging
@@ -88,6 +90,10 @@ Notes:
 - App exports traces/metrics to Collector; Collector fan-outs to Jaeger and Prometheus.
 
 ---
+
+## 📸 Screenshots
+
+> Coming soon — screenshots of the Grafana, Jaeger, and Prometheus UIs will be added here.
 
 ## Repository Structure
 
@@ -500,6 +506,10 @@ Fix options:
 - Or find and stop the container publishing 3000, or restart Docker Desktop if proxies persist.
 
 ---
+
+## Deployment
+
+The recommended deployment path is the Helm chart in `helm/traceops/`. For production, update `values.yaml` to point to a real image registry and set `imagePullPolicy: IfNotPresent`.
 
 ## Cleanup
 
