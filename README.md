@@ -1,6 +1,13 @@
 # TraceOps
 TraceOps is a lightweight, end-to-end observability stack for a Node.js microservice on Kubernetes using Docker Desktop + Helm.
 
+| Project Snapshot | |
+|---|---|
+| **What it is** | A containerized observability stack with OpenTelemetry, Prometheus, Grafana, Jaeger, and Helm on Kubernetes. |
+| **Why it matters** | Shows how to collect, correlate, and visualize traces and metrics in a microservices environment. |
+| **Tech stack** | Node.js, Express, OpenTelemetry, Prometheus, Grafana, Jaeger, Helm, Docker Desktop, GitHub Actions. |
+| **Key outcomes** | End-to-end observability, GitOps-ready manifests, automated CI image builds, and low-resource tuning. |
+
 ## Overview
 
 - Microservice: Node.js (Express) with OpenTelemetry auto-instrumentation and custom spans/logging
@@ -319,7 +326,7 @@ Set your repo URL in `k8s/argocd-application.yaml`:
 ```yaml
 spec:
   source:
-    repoURL: https://github.com/<your-username>/TraceOps.git
+    repoURL: https://github.com/iampraveen6/TraceOps.git
     targetRevision: main
     path: k8s
 ```
